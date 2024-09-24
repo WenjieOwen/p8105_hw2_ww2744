@@ -355,7 +355,29 @@ display: none;
 </div>
 
 
-
+<div id="problem-1" class="section level1">
+<h1>Problem 1</h1>
+<p>Import the NYC Transit data</p>
+<pre class="r"><code>trans_df = 
+  read_csv(&quot;data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv&quot;, na = c(&quot;NA&quot;, &quot;&quot;,&quot;.&quot;)) |&gt;
+  janitor::clean_names() |&gt;
+  mutate(
+    entry = case_match(
+      entry,
+      &quot;YES&quot; ~ 1,
+      &quot;NO&quot; ~ 0
+    )
+  )</code></pre>
+<pre><code>## Rows: 1868 Columns: 32
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (22): Division, Line, Station Name, Route1, Route2, Route3, Route4, Rout...
+## dbl  (8): Station Latitude, Station Longitude, Route8, Route9, Route10, Rout...
+## lgl  (2): ADA, Free Crossover
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
 
 
 

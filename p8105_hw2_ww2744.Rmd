@@ -9,3 +9,21 @@ library(tidyverse)
 library(readxl)
 library(haven)
 ```
+
+# Problem 1 
+
+Import the NYC Transit data
+
+```{r}
+trans_df = 
+  read_csv("data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv", na = c("NA", "",".")) |>
+  janitor::clean_names() |>
+  mutate(
+    entry = case_match(
+      entry,
+      "YES" ~ 1,
+      "NO" ~ 0
+    )
+  )
+```
+

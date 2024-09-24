@@ -1,0 +1,11 @@
+---
+title: "p8105_hw2_ww2744"
+author: "Wenjie Wu"
+output: html_document
+---
+
+```{r setup, echo = FALSE, message = FALSE}
+library(tidyverse)
+library(readxl)
+library(haven)
+```

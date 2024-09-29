@@ -361,11 +361,12 @@ display: none;
 <pre class="r"><code>trans_df = 
   read_csv(&quot;data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv&quot;, na = c(&quot;NA&quot;, &quot;&quot;,&quot;.&quot;)) |&gt;
   janitor::clean_names() |&gt;
+  select(line:entry, vending, ada) |&gt;
   mutate(
     entry = case_match(
       entry,
-      &quot;YES&quot; ~ 1,
-      &quot;NO&quot; ~ 0
+      &quot;YES&quot; ~ TRUE,
+      &quot;NO&quot; ~ FALSE
     )
   )</code></pre>
 <pre><code>## Rows: 1868 Columns: 32
@@ -377,6 +378,77 @@ display: none;
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<ul>
+<li>The dataset contains 1863 rows and 19 columns.</li>
+<li>This dataset contains information about subway entrances and exits
+in New York City. Key variables include the subway line, station name,
+station latitude/longitude, routes served, entry (whether the entrance
+allows entry), vending, entrance type (e.g., stairs, escalator), and ADA
+compliance.</li>
+</ul>
+<p>Cleaning steps:</p>
+<ul>
+<li>Load data, take <code>NA</code> vaules like: “NA”, ““,”.” as missing
+values.</li>
+<li>Use janitor::clean_names() to transform all the col names into
+letters</li>
+<li>Use <code>select</code> function to select the columns needed to be
+anaylzed.</li>
+<li>Use <code>case_match</code> to convert <code>entry</code> variable
+to a logical variable.</li>
+</ul>
+<pre class="r"><code>distinct_stations = trans_df |&gt;
+  distinct(line, station_name) |&gt;
+  nrow() |&gt;
+  print()</code></pre>
+<pre><code>## [1] 465</code></pre>
+<ul>
+<li>There are <code>distinct_stations</code> distinct stations.</li>
+</ul>
+<pre class="r"><code>ada_compliant_stations = trans_df |&gt;
+  filter(ada == TRUE) |&gt;
+  distinct(line, station_name) |&gt;
+  nrow() |&gt;
+  print()</code></pre>
+<pre><code>## [1] 84</code></pre>
+<ul>
+<li>84 stations are ADA compliant.</li>
+</ul>
+<pre class="r"><code>proportion_non_vending_allow_entry = trans_df |&gt;
+  filter(vending == &quot;NO&quot;) |&gt;
+  summarise(proportion = mean(entry == TRUE, na.rm = TRUE)) |&gt;
+  unlist() |&gt;
+  percent() |&gt;
+  print()</code></pre>
+<pre><code>## proportion 
+##      &quot;38%&quot;</code></pre>
+<ul>
+<li>About 38% of station entrances/exits without vending machines allow
+entrance.</li>
+</ul>
+<pre class="r"><code>tidy_data = trans_df |&gt;
+  mutate(across(starts_with(&quot;Route&quot;), as.character)) |&gt;
+  pivot_longer(cols = starts_with(&quot;route&quot;), 
+               names_to = &quot;route_Number&quot;, 
+               values_to = &quot;route_Name&quot;, 
+               values_drop_na = TRUE)
+
+stations_serving_A = tidy_data |&gt;
+  filter(route_Name == &quot;A&quot;) |&gt;
+  distinct(line, station_name) |&gt;
+  nrow()|&gt;
+  print()</code></pre>
+<pre><code>## [1] 60</code></pre>
+<pre class="r"><code>ada_compliant_stations_A = tidy_data |&gt;
+  filter(route_Name == &quot;A&quot; &amp; ada == TRUE) |&gt;
+  distinct(line, station_name) |&gt;
+  nrow() |&gt;
+  print()</code></pre>
+<pre><code>## [1] 17</code></pre>
+<ul>
+<li>60 distinct stations serve the A train.</li>
+<li>Among them 17 are ADA compliant.</li>
+</ul>
 </div>
 
 

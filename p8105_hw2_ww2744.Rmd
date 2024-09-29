@@ -8,6 +8,8 @@ output: html_document
 library(tidyverse)
 library(readxl)
 library(haven)
+library(dplyr)
+library(scales)
 ```
 
 # Problem 1 
@@ -18,12 +20,77 @@ Import the NYC Transit data
 trans_df = 
   read_csv("data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv", na = c("NA", "",".")) |>
   janitor::clean_names() |>
+  select(line:entry, vending, ada) |>
   mutate(
     entry = case_match(
       entry,
-      "YES" ~ 1,
-      "NO" ~ 0
+      "YES" ~ TRUE,
+      "NO" ~ FALSE
     )
   )
 ```
+
+- The dataset contains 1863 rows and 19 columns.
+- This dataset contains information about subway entrances and exits in New York City. Key variables include the subway line, station name, station latitude/longitude, routes served, entry (whether the entrance allows entry), vending, entrance type (e.g., stairs, escalator), and ADA compliance.
+
+Cleaning steps:
+
+- Load data, take `NA` vaules like: "NA", "", "." as missing values.
+- Use janitor::clean_names() to transform all the col names into letters
+- Use `select` function to select the columns needed to be anaylzed.
+- Use `case_match` to convert `entry` variable to a logical variable.
+
+```{r}
+distinct_stations = trans_df |>
+  distinct(line, station_name) |>
+  nrow() |>
+  print()
+```
+
+- There are `distinct_stations` distinct stations.
+
+```{r}
+ada_compliant_stations = trans_df |>
+  filter(ada == TRUE) |>
+  distinct(line, station_name) |>
+  nrow() |>
+  print()
+```
+
+- 84 stations are ADA compliant.
+
+```{r}
+proportion_non_vending_allow_entry = trans_df |>
+  filter(vending == "NO") |>
+  summarise(proportion = mean(entry == TRUE, na.rm = TRUE)) |>
+  unlist() |>
+  percent() |>
+  print()
+```
+- About `r proportion_non_vending_allow_entry` of station entrances/exits without vending machines allow entrance.
+
+```{r}
+tidy_data = trans_df |>
+  mutate(across(starts_with("Route"), as.character)) |>
+  pivot_longer(cols = starts_with("route"), 
+               names_to = "route_Number", 
+               values_to = "route_Name", 
+               values_drop_na = TRUE)
+
+stations_serving_A = tidy_data |>
+  filter(route_Name == "A") |>
+  distinct(line, station_name) |>
+  nrow()|>
+  print()
+
+ada_compliant_stations_A = tidy_data |>
+  filter(route_Name == "A" & ada == TRUE) |>
+  distinct(line, station_name) |>
+  nrow() |>
+  print()
+```
+
+- `r stations_serving_A` distinct stations serve the A train.
+- Among them `r ada_compliant_stations_A` are ADA compliant.
+
 

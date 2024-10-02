@@ -1,7 +1,7 @@
 ---
 title: "p8105_hw2_ww2744"
 author: "Wenjie Wu"
-output: html_document
+output: github_document
 ---
 
 ```{r setup, echo = FALSE, message = FALSE}
@@ -93,4 +93,147 @@ ada_compliant_stations_A = tidy_data |>
 - `r stations_serving_A` distinct stations serve the A train.
 - Among them `r ada_compliant_stations_A` are ADA compliant.
 
+
+# Problem 2
+
+Read and clean the data
+
+Mr. Trash Wheel
+
+```{r, message = FALSE}
+Trash_wheel = 
+  read_excel(
+    "data/202309 Trash Wheel Collection Data.xlsx", 
+    sheet = "Mr. Trash Wheel",
+    skip = 1,
+    na = c("NA", ",", ".")
+  ) |>
+  select(-c(...15, ...16)) |>
+  janitor::clean_names() |>
+  filter(!is.na(dumpster)) |>
+  mutate(
+    sports_balls = as.integer(round(sports_balls))
+  )
+  
+```
+
+ Load Professor Trash Wheel and Gwynnda
+
+```{r}
+Professor_trash_wheel = 
+  read_excel(
+    "data/202309 Trash Wheel Collection Data.xlsx", 
+    sheet = "Professor Trash Wheel",
+    skip = 1,
+    na = c("NA", ",", ".")
+  ) |>
+  janitor::clean_names() |>
+  filter(!is.na(dumpster))
+  
+
+Gwynnda_trash_wheel = 
+    read_excel(
+    "data/202309 Trash Wheel Collection Data.xlsx", 
+    sheet = "Gwynnda Trash Wheel",
+    skip = 1,
+    na = c("NA", ",", ".")
+  ) |>
+  janitor::clean_names() |>
+  filter(!is.na(dumpster))
+
+
+```
+
+Combine the datasets
+
+```{r}
+Trash_wheel = Trash_wheel |> mutate(trash_wheel = "Mr. Trash Wheel",
+                      year = as.character(year))
+Professor_trash_wheel = Professor_trash_wheel |> mutate(trash_wheel = "Professor Trash Wheel",
+                                year = as.character(year))
+Gwynnda_trash_wheel = Gwynnda_trash_wheel|>  mutate(trash_wheel = "Gwynnda Trash Wheel",
+                              year = as.character(year))
+
+
+combined_trash_wheel = bind_rows(Trash_wheel, Professor_trash_wheel, Gwynnda_trash_wheel) |>
+  select(-c(dumpster)) |>
+  relocate(trash_wheel)
+```
+
+- The combined dataset of trash collected by Mr. Trash Wheel, Professor Trash Wheel, and Gwynnda Trash Wheel contains `r nrow(combined_trash_wheel)` observations. 
+- Key variables include weight_tons representing the weight of trash collected per dumpster, the time of collection and specific waste types like plastic_bottles and cigarette_butts. 
+
+```{r}
+total_weight_prof = sum(
+  filter(combined_trash_wheel, trash_wheel == "Professor Trash Wheel") |>
+    select(weight_tons),
+  na.rm = TRUE
+)
+total_weight_gwy = sum(
+  filter(combined_trash_wheel, trash_wheel == "Professor Trash Wheel" & month == "June" & year == "2022" ) |>
+    select(cigarette_butts), 
+    na.rm = TRUE
+)
+  
+```
+
+-  For Professor Trash Wheel, the total weight of trash collected is `r total_weight_prof` tons. Meanwhile, Gwynnda Trash Wheel collected `r total_weight_gwy`cigarette butts in June of 2022.
+
+
+# Problem 3
+
+Import and clean datasets
+
+
+```{r}
+bakers_df =   read_csv("data/gbb_datasets/bakers.csv", na = c("NA", "",".")) |>
+  janitor::clean_names() |>
+  separate(col = baker_name, into = c("baker", "baker_last_name"), sep = " ") |>
+  print()
+
+bakes_df = read_csv("data/gbb_datasets/bakes.csv", na = c("NA", "",".", "N/A")) |>
+  janitor::clean_names() |>
+  mutate(baker = ifelse(baker == '"Jo"', "Joanne", baker)) |>
+  print()
+
+results_df = read_csv("data/gbb_datasets/results.csv", na = c("NA", "","."), skip = 2) |>
+  janitor::clean_names() |>
+  print()
+
+viewers_df = read_csv("data/gbb_datasets/viewers.csv", na = c("NA", "",".")) |>
+  janitor::clean_names() |>
+  pivot_longer(
+    cols = series_1:series_10,
+    names_to = "series",
+    values_to = "viewers",
+    names_prefix = "series_"
+  )
+```
+
+
+Check for completeness and correctness
+
+
+```{r}
+missing_in_bakes = anti_join(bakers_df, bakes_df, 
+                              by = c("baker" = "baker", "series"))
+
+missing_in_results = anti_join(bakers_df, results_df, 
+                                by = c("baker" = "baker", "series"))
+
+missing_in_results_for_bakes = anti_join(bakes_df, results_df, 
+                                          by = c("baker", "series", "episode"))
+```
+
+
+Create a single dataset
+
+
+```{r}
+GBBF_df = left_join(results_df, bakes_df, by = c("series", "episode", "baker")) |>
+  left_join(bakers_df, by = c("series", "baker")) |>
+  relocate(series, episode, baker, baker_last_name, baker_age, baker_occupation, hometown, signature_bake, technical, result, show_stopper)
+
+write.csv(GBBF_df, file = "data/gbb_datasets/GBBF.csv", row.names = FALSE)
+```
 

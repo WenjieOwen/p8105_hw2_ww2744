@@ -103,7 +103,7 @@ Mr. Trash Wheel
 ```{r, message = FALSE}
 Trash_wheel = 
   read_excel(
-    "data/202309 Trash Wheel Collection Data.xlsx", 
+    "data/202409 Trash Wheel Collection Data.xlsx", 
     sheet = "Mr. Trash Wheel",
     skip = 1,
     na = c("NA", ",", ".")
@@ -188,17 +188,14 @@ Import and clean datasets
 ```{r}
 bakers_df =   read_csv("data/gbb_datasets/bakers.csv", na = c("NA", "",".")) |>
   janitor::clean_names() |>
-  separate(col = baker_name, into = c("baker", "baker_last_name"), sep = " ") |>
-  print()
+  separate(col = baker_name, into = c("baker", "baker_last_name"), sep = " ") 
 
 bakes_df = read_csv("data/gbb_datasets/bakes.csv", na = c("NA", "",".", "N/A")) |>
   janitor::clean_names() |>
-  mutate(baker = ifelse(baker == '"Jo"', "Joanne", baker)) |>
-  print()
+  mutate(baker = ifelse(baker == '"Jo"', "Joanne", baker))
 
 results_df = read_csv("data/gbb_datasets/results.csv", na = c("NA", "","."), skip = 2) |>
-  janitor::clean_names() |>
-  print()
+  janitor::clean_names()
 
 viewers_df = read_csv("data/gbb_datasets/viewers.csv", na = c("NA", "",".")) |>
   janitor::clean_names() |>
@@ -207,7 +204,9 @@ viewers_df = read_csv("data/gbb_datasets/viewers.csv", na = c("NA", "",".")) |>
     names_to = "series",
     values_to = "viewers",
     names_prefix = "series_"
-  )
+  ) |>
+  arrange(series) |>
+  relocate(series, episode)
 ```
 
 
@@ -237,3 +236,51 @@ GBBF_df = left_join(results_df, bakes_df, by = c("series", "episode", "baker")) 
 write.csv(GBBF_df, file = "data/gbb_datasets/GBBF.csv", row.names = FALSE)
 ```
 
+Data cleaning process:
+
+- Import datasets, use`Janitor:clean_names` to uniform the column names.
+- The `bakes.csv` takes `N/A` as `NA`.
+- Check the association of column elements with elements from another table，seperate the column  `baker name` in `baker.csv` because the other datasets only use baker's first name. 
+- Use `anti_join` to check the completeness and correctness of the dataframes, found that `"Jo"` in `bakes.csv` equals to `Joanne` in `results.csv`, use `mutate` to change it.
+- Use `left_join` to merge the three processed dataframes. A `left_join` means all rows from `results_df` are retained, and matching rows from `bakes_df` are added. If no match is found in `bakes_df`, ` NA` will be introduced for the missing data.
+- `Relocate` is used to reorder the columns of the resulting dataset, making sure that key columns like series, episode, baker, and related information are positioned in a logical order for easier interpretation and analysis.
+- The final dataset have 1136 rows and 11 columns.
+
+
+Winner of each episode in Seasons 5 through 10
+
+```{r}
+winner_df = select(GBBF_df, series, episode, baker, result) |>
+  filter(result %in% c("WINNER", "STAR BAKER"), series > 4 ) |>
+  print()
+```
+
+
+
+
+Viewership Data
+
+```{r}
+viewers_df |>
+  slice_head(n = 10) |>
+  print()
+```
+
+```{r}
+s1_viewer = viewers_df |>
+  filter(series == 1) |>
+  pull(viewers) |>
+  mean(na.rm = TRUE) |>
+  print()
+
+
+s5_viewer = viewers_df |>
+  filter(series == 5) |>
+  pull(viewers) |>
+  mean(na.rm = TRUE) |>
+  print()
+```
+
+
+
+The average viewship in Season 1 is `r s1_viewer`, Season 5 is `r s5_viewer`.

@@ -122,7 +122,7 @@ Trash_wheel =
 ```{r}
 Professor_trash_wheel = 
   read_excel(
-    "data/202309 Trash Wheel Collection Data.xlsx", 
+    "data/202409 Trash Wheel Collection Data.xlsx", 
     sheet = "Professor Trash Wheel",
     skip = 1,
     na = c("NA", ",", ".")
@@ -133,7 +133,7 @@ Professor_trash_wheel =
 
 Gwynnda_trash_wheel = 
     read_excel(
-    "data/202309 Trash Wheel Collection Data.xlsx", 
+    "data/202409 Trash Wheel Collection Data.xlsx", 
     sheet = "Gwynnda Trash Wheel",
     skip = 1,
     na = c("NA", ",", ".")
@@ -161,7 +161,7 @@ combined_trash_wheel = bind_rows(Trash_wheel, Professor_trash_wheel, Gwynnda_tra
 ```
 
 - The combined dataset of trash collected by Mr. Trash Wheel, Professor Trash Wheel, and Gwynnda Trash Wheel contains `r nrow(combined_trash_wheel)` observations. 
-- Key variables include weight_tons representing the weight of trash collected per dumpster, the time of collection and specific waste types like plastic_bottles and cigarette_butts. 
+- Key variables include `weight_tons` representing the weight of trash collected per dumpster, the `time` of collection and specific waste types like `plastic_bottles` and `cigarette_butts`. 
 
 ```{r}
 total_weight_prof = sum(
